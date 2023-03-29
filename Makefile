@@ -193,14 +193,24 @@ utils.o: utils.cpp utils.h
 	$(CXX) $(CXXFLAGS) -c utils.cpp -o utils.o
 
 clean:
-	rm -f *.o main quantize
+	rm -f *.o main quantize tokenizer && rm -f -r tokenizer_rs/target
 
-main: main.cpp ggml.o utils.o
-	$(CXX) $(CXXFLAGS) main.cpp ggml.o utils.o -o main $(LDFLAGS)
+tokenizer_rs/target/debug/libtokenizer.so:
+	cd ./tokenizer_rs && cargo build
+
+tokenizer.o: tokenizer.cpp tokenizer.h tokenizer_rs/target/debug/libtokenizer.so
+	$(CXX) $(CXXFLAGS) -c tokenizer.cpp -ldl
+
+tokenizer: tokenizer.cpp tokenizer_rs/target/debug/libtokenizer.so
+	$(CXX) $(CXXFLAGS) tokenizer.cpp -o tokenizer -ldl
+
+main: main.cpp ggml.o utils.o tokenizer.o
+	$(CXX) $(CXXFLAGS) main.cpp ggml.o utils.o tokenizer.o -o main $(LDFLAGS) -ldl
 	./main -h
 
 quantize: quantize.cpp ggml.o utils.o
 	$(CXX) $(CXXFLAGS) quantize.cpp ggml.o utils.o -o quantize $(LDFLAGS)
+
 
 #
 # Tests

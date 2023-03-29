@@ -1,6 +1,7 @@
 #include "ggml.h"
 
 #include "utils.h"
+#include "tokenizer.h"
 
 #include <cassert>
 #include <cmath>
@@ -821,17 +822,19 @@ int main(int argc, char ** argv) {
     std::vector<float> logits;
 
     // tokenize the prompt
-    std::vector<gpt_vocab::id> embd_inp = ::bloom_tokenize(vocab, params.prompt, false); //TODO: set bos to true?
+    // std::vector<gpt_vocab::id> embd_inp = ::bloom_tokenize(vocab, params.prompt, false); //TODO: set bos to true?    
+    // std::vector<gpt_vocab::id> embd_inp = ::gpt_tokenize(vocab, params.prompt);    
+    std::vector<gpt_vocab::id> embd_inp = ::encode(params.prompt);
 
     params.n_predict = std::min(params.n_predict, model.hparams.n_ctx - (int) embd_inp.size());
 
     printf("\n");
     printf("%s: prompt: '%s'\n", __func__, params.prompt.c_str());
     printf("%s: number of tokens in prompt = %zu\n", __func__, embd_inp.size());
-    for (int i = 0; i < (int) embd_inp.size(); i++) {
-        printf("%6d -> '%s'\n", embd_inp[i], vocab.id_to_token.at(embd_inp[i]).c_str());
-    }
-    printf("\n");
+    // for (int i = 0; i < (int) embd_inp.size(); i++) {
+    //     printf("%6d -> '%s'\n", embd_inp[i], vocab.id_to_token.at(embd_inp[i]).c_str());
+    // }
+    //printf("\n");
     printf("sampling parameters: temp = %f, top_k = %d, top_p = %f, repeat_last_n = %i, repeat_penalty = %f\n", params.temp, params.top_k, params.top_p, params.repeat_last_n, params.repeat_penalty);
     printf("\n\n");
 
@@ -901,9 +904,17 @@ int main(int argc, char ** argv) {
         }
 
         // display text
-        for (auto id : embd) {
-            printf("%s", vocab.id_to_token[id].c_str());
-        }
+        // for (auto id : embd) {        
+        //     printf("%s", vocab.id_to_token[id].c_str());
+        // }
+
+        // check id
+        // for(int i = 0; i < embd.size(); i++) {             
+        //     printf("%d\n", embd[i]);
+        // }
+        // printf("----\n");
+        std::string result = ::decode(embd);
+        printf("%s", result.c_str());
         fflush(stdout);
 
         // end of text token
